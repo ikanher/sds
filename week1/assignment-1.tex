@@ -51,9 +51,13 @@ Aleatory uncertainty is a more complex concept. How do you know when something i
 
 On the practical side, it's not possible to dive deep enough in data analysis to get rid of all the epistemic uncertainty. To estimate some data related to for example the whole population on earth it's not possible to go and ask everyone and get the true data - we have to take a sample and estimate the population data from the sample. I think this is a good example of epistemic and aleatory uncertainty in statistics: you can't get the true data so it's aleatory, but in theory you could go to everyone and do your statistics, which makes it epistemic.
 
-\subsection*{Die roll} As $A$ has seen the result of the die roll, there's no uncertainty for this person. If the result of the die roll was 6, then $P(6|I_A) = 1$, otherwise $P(6|I_A) = 0$. Person $B$, on the other hand, does not know the result so all the outcomes have equal probability and hence $P(6|I_B) = \frac{1}{6}$.
+\subsection*{Subjectivity of probabilities}
 
-\subsection*{World cup} As $A$ does now know anything about soccer all the participating countries have equal probabilitis of winning - actually person $A$ could probably give the same probabilities for Finland winning than Brazil winning if the list of participants are not available. Person $B$ knows about soccer and probably know that Finland is not playing there. Also person $B$ should know that Brazil is usually a winning candidate and gives higher probabilities to teams such as Brazil.
+In the die rolling case, as $A$ has seen the result of the die roll, there's no uncertainty for this person. If the result of the die roll was 6, then $P(6|I_A) = 1$, otherwise $P(6|I_A) = 0$. Person $B$, on the other hand, does not know the result so all the outcomes have equal probability and hence $P(6|I_B) = \frac{1}{6}$.
+
+In the soccer case, as $A$ does not know anything about soccer all the participating countries have equal probabilitis of winning - actually person $A$ could probably give the same probabilities for Finland winning than Brazil winning if the list of participants are not available. Person $B$ knows about soccer and probably know that Finland is not playing there. Also person $B$ should know that Brazil is usually a winning candidate and gives higher probabilities to teams such as Brazil.
+
+In the first case the probability is objective: the die has been rolled and the result is not based on hunch or a feeling. However, as the person $A$ knows the result of the die throw already and it changes the person's estimate of the probability. But I would rather call this epistemic than subjective probability as person $B$ just does not know the result yet. Subjective probability is based on a feeling of a person. There's some subjectivity in the second example: for example if person $B$, who knows about soccer, happens to be a fan of Brazil. My guess is that this would raise the probability of Brazil winning in the person's mind. But everything else is the same. If the person $B$ does not put his feelings in to the bet, but purely inspects the collected statistics and bases the probability on that information, I believe the probability would now be objective. On the other hand person $A$ probably does make an objective estimate of the probability as the person is not interested in soccer and therefore only has facts to base the probability on - no feelings attached.
 
 \section*{3.}
 \subsection*{a.}
@@ -94,7 +98,7 @@ Calculated with R:
 
 \subsection*{c.}
 
-When $\sigma$ increases the data is more spread out. Therefore the probability of the distribution with mean 1 drops and the probability of the distribution with mean 2 rises. When $\sigma$ is large enough the probabilities of both distributions are getting close and close to 0.5.
+When $\sigma$ increases the data is more spread out. Therefore the probability of the distribution with mean 1 drops and the probability of the distribution with mean 2 rises. When $\sigma$ is large enough the probabilities of both distributions are getting close to 0.5.
 
 And vice versa, if $\sigma$ decreases then the data is less spread out and therefore the probability of the distribution with mean 1 rises. When $\sigma$ is small enough it's the probability of distribution with mean 1 is getting close to 1.
 
