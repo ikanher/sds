@@ -86,15 +86,17 @@ Sketch of the distribution can ben seen in figure \ref{fig:3-a}.
     P(\theta = 1 \mid y = 1) = \frac{P(y=1 \mid \theta = 1) P(\theta=1)}{P(y=1)}
 \]
 
-Calculated with R:
+Calculation with R:
 
 \begin{verbatim}
 > sigma = 2
 > mu1 = 1
+> (dnorm(1, mu1, sigma)*1/2)/(dnorm(1, mu1, sigma)*1/2 + dnorm(1, mu2, sigma)*1/2)
+[1] 0.6224593
 > mu2 = 2
-> (pnorm(1, mu1, sigma)*1/2)/(pnorm(1, mu1, sigma)*1/2 + pnorm(1, mu2, sigma)*1/2)
-[1] 0.6184005
 \end{verbatim}
+
+So $P(\theta = 1|y = 1) \approx 0.6224593$.
 
 \subsection*{c.}
 
