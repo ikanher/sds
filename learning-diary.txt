@@ -1,0 +1,8 @@
+Week 1
+======
+
+Nice refreshment of Bayesian probability theory.
+
+As a new thing learnt that Bayesian probabilities are really handy, because you don't have to redo the whole study if you want to add more data. You can just use the old study as prior and do the calculations as usually. This sounds really great!
+
+I have never really used R, so learning R has been great! I have pretty good knowledge of programming languages so it hasn't been (at least yet) that difficult and I've been enjoying learning how to program also in R.
