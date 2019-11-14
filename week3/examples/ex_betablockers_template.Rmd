@@ -1,0 +1,27 @@
+---
+title: 'Results: Beta-blockers exercise'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Results: Beta-blockers exercise
+
+Inference for a $2\times 2$ table: an experiment was performed to estimate 
+the effect of beta-blockers on mortality of cardiac patients. A group of patients 
+were randomly assigned to treatment and control groups: out of 674 patients 
+receiving the control, 39 died, and out of 680 receiving the treatment, 22 died. 
+Assume that the outcomes are independent and binomially distributed with 
+probabilities of death $p_0$ and $p_1$ under the control and treatment, 
+respectively. 
+
+ * Set up a noninformative prior distribution for $(p_0,p_1)$ and draw samples from their posterior
+ * Summarize the posterior distribution for the odds ratio $(p_1/(1-p_1))/(p_0(1-p_0))$ using the posterior mean, median and central 95\% credible interval.
+ * Analyze and discuss the sensitivity of inference to the choice of the prior density.
+
+
+```{r}
+
+```

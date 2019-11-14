@@ -1,0 +1,288 @@
+---
+title: "Mark-recapture method for population size estimation"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+The basic idea in mark-recapture method for estimating animal populations is that a researcher visits a study area and captures a group of individuals. Each of these individuals is marked with a unique identifier (e.g., a numbered tag, ring or band), and is released back into the  environment. Sufficient time is allowed to pass for the marked individuals to redistribute themselves among the unmarked population. After a while, the researcher returns and  captures another sample of individuals. 
+
+Assumptions in the basic implementation of the method are, among others, that the time between consecutive captures is long enough for "perfect mixing", marks are not lost, the behavior and capture probability of an individual does not change due to marking and that the study population is "closed". In other words, the two visits to the study area  are close enough in time so that no individuals die, are born, move into the study area (immigrate) or move out of the study area (emigrate) between visits. If these assumptions hold, we can reasonably assume that the *marked animals are randomly distributed in the total population" which then allows for inference on the total population size.
+
+This method is illustrated during the lecture where we estimate the number of balls in a bag (the total *population* comprises of all the balls in the bag).
+
+Let $N$ denote the total population size, $M$ the population size marked individuals at first visit, $C$ the total number of animals captured at the second time and $R$ the number of recaptured animals. By assuming that $N$ is large compared to $M$ and that the marked individuals are randomly distributed in the population, we can use Binomial distribution as our observation model for $R$ as follows
+\begin{equation}
+     p(R|C,M,N) = \mathrm{Bin}(R| C, M/N) 
+\end{equation}
+We have to define a prior for $N$ after which we can solve its posterior 
+\begin{equation}
+     p(N|M,C,R) \propto \mathrm{Bin}(R| C, M/N) p(N)
+\end{equation}
+
+The number of marked balls is 
+```{r}
+M=25
+```
+
+We will now analyze the total number of balls in the bag. This will be done in first by exact calculations with discrete valued $N$ and after that using Markov chain Monte Carlo.
+
+## Conduct the inference with discretization
+
+Since there is only one, discrete, variable that we are interested in, we can easily discretize the problem and work with array(s) of probabilities
+
+Let's define an array of values $N$ that we think are a priori plausible at all. The below values are "hard" limits. Prior probability below the minimum and above the maximum is zero
+```{r}
+abs_min <- M    # there were M=25 marked balls
+abs_max <- 300  # No way that bag can contain more than 1000 balls (a subjective assumption)
+
+
+# Define the evaluation points so that all integers between 
+# abs_min and abs_max are included
+Nseq <- seq(abs_min, abs_max, length=abs_max-abs_min+1)  
+```
+
+Next we define prior for $N$ and draw it.
+
+Now that we have a discrete variable we have to give a prior probability for each of the elements in Nseq. You  can do this in multiple ways. Here are few examples:
+```{r}
+par(mfrow=c(2,3))              # Open figure for plotting the examples
+
+# uniform prior
+Nprior <- rep(1,length(Nseq))/length(Nseq)  
+sum(Nprior)              # check that prior probabilities sum up to to one
+plot(Nseq,Nprior, main="Uniform prior", xlab="N", type="l")
+# "Gaussian" prior
+Nprior <- dnorm(Nseq, mean=50, sd=20)
+Nprior <- Nprior/sum(Nprior)     # Normalize the prior probabilities to sum to one
+sum(Nprior)        # check that prior probabilities sum up to to one
+plot(Nseq,Nprior, main="Gaussian prior", xlab="N", type="l")
+# log-Gaussian prior
+Nprior <- dlnorm(Nseq, mean=5, sd=1)
+Nprior <- Nprior/sum(Nprior)   # Normalize the prior probabilities to sum to one
+sum(Nprior)        # check that prior probabilities sum up to to one
+plot(Nseq,Nprior, main="log-Gaussian prior", xlab="N", type="l")
+# Step wise prior by giving different relative weights for different values
+Nprior <- rep(1,length(Nseq))  
+Nprior[Nseq>50 & Nseq<600] <- 2  
+Nprior[Nseq>70 & Nseq<400] <- 4  
+Nprior[Nseq>200 & Nseq<300] <- 6  
+Nprior <- Nprior/sum(Nprior)    # Normalize the prior probabilities to sum to one
+sum(Nprior)        # check that prior probabilities sum up to to one
+plot(Nseq,Nprior, main="Step-wise prior", xlab="N", type="l")
+
+# --- Here we will fill in the prior defined during the lecture ---
+Nprior <- dlnorm(Nseq, mean=5.05, sd=1.1)
+Nprior <- Nprior/sum(Nprior)    # Normalize to sum to one
+sum(Nprior)                     # check that prior probabilities sum up to to one
+
+plot(Nseq,Nprior, main="My own prior", xlab="N", type="l")
+```
+
+Now that we have defined the vector of prior probabilities for different values of $N$ we can can conduct the second sampling round, to obtain data $C$ and $R$, and after that calculate the posterior distribution for it by using the Bayes Theorem explicitly
+
+```{r}
+# The result from the other sampling time
+C=22
+R=3
+
+Nposterior <- Nprior*dbinom(R,C,M/Nseq)  # numerator of Bayes theorem
+Nposterior <- Nposterior/sum(Nposterior) # divide by marginal likelihood
+plot(Nseq,Nposterior, main="The posterior distribution", xlab="N", type="l")
+```
+
+Given the vector of posterior probabilities for different values of $N$ we can calculate various summaries for the posterior distribution. Such as 
+
+the posterior mean
+```{r}
+posteriorMean = sum(Nposterior*Nseq)
+```
+
+the posterior standard deviation
+```{r}
+posteriorSD = sqrt(sum(Nposterior* (Nseq-posteriorMean)^2))
+```
+
+and some quantiles. However, for these we need to first calculate the cumulative distribution function
+```{r}
+NposteriorCDF <- cumsum(Nposterior)           
+# Plot CDF
+plot(Nseq,NposteriorCDF, main="posterior CDF", xlab="N", type="l")
+```
+
+Now we can calculate, for example, the 10% and 90% posterior quantile
+```{r}
+# 10% quantile is the last N at which CDF is under 10%
+Nseq[max(which(NposteriorCDF<0.1))]
+# 90% quantile is the first N at which CDF is over 90%
+Nseq[min(which(NposteriorCDF>0.9))]
+```
+
+as well as the probability that $N$ is less than 50 ($p(N<50|M,C,R)$) 
+```{r}
+NposteriorCDF[which(Nseq==49)]
+```
+
+\newpage
+## Next we analyze the same data using Markov chain Monte Carlo and Stan
+
+Load the needed libraries into R
+(if these are not yet installed you need to run first
+
+install.packages("[name of the package]")
+
+```{r}
+library(ggplot2)
+library(StanHeaders)
+library(rstan)
+library(coda)
+```
+
+Use the two commands below when you use rstan
+As the startup message says, if you are using rstan locally on a multicore machine and have plenty of RAM to 
+estimate your model in parallel, at this point execute
+
+options(mc.cores = parallel::detectCores())
+
+Allows you to automatically save a bare version of a compiled Stan program to the hard disk so that it 
+does not need to be recompiled (unless you change it).
+
+rstan_options(auto_write = TRUE)
+
+
+```{r}
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+```
+
+
+Then we write the model description in Stan language
+
+```{r}
+mark_recapture_model="
+data{
+  int<lower = 0> M;
+  int<lower = 0> C;
+  int<lower = 0, upper = min(C, M)> R;
+}
+parameters{
+  real<lower = M> N;
+}
+model{
+  N ~ lognormal(5.05, 1.1) T[M,];  //prior
+  R ~ binomial(C, M / N);          //likelihood
+}
+"
+```
+
+Note, above the stan model was defined through a generative model description. Sometimes an alternative way, using *log probability density* formulation is easier. For example, if your likelihood is such that you cannot write down the generative model explicitly. Hence, let's demonstrate how to do this for the above model
+
+```{r}
+mark_recapture_model="
+data{
+  int<lower = 0> M;
+  int<lower = 0> C;
+  int<lower = 0, upper = min(C, M)> R;
+}
+parameters{
+  real<lower = M> N;
+}
+model{
+  N ~ lognormal(5.05, 1.1) T[M,];               // prior
+  target += binomial_lpmf(R|C, M / N);          // add log likelihood to the target (=log posterior) function 
+}
+"
+```
+
+You can test both of these 
+
+Now we are ready to run the Markov chain sampling with Stan. The parameters to give stan() function are:
+
+* model_code
+* data = data in list format
+* inits = initial values for the model parameters for each of the chains
+* warmup = a positive integer specifying the number of warmup (aka burnin) iterations per chain
+* iter = a positive integer specifying the number of iterations for each chain (including warmup)
+* chains = number of chains (has to equal to the number of inits)
+* thin = a positive integer specifying the period for saving samples
+
+see help(stan) for more information.
+
+The next lines put our data into a list, intialize the chains manually and sample from the model defined above and return the fitted result as an instance of stanfit.
+
+```{r}
+#data
+dataset <- list ("M"=M, "C"=C, "R"=R)
+
+#give initial values for all chains for parameter N
+init1 <- list (N = 100)
+init2 <- list (N = 50)
+init3 <- list (N = 300)
+init4 <- list (N = 150)
+inits <- list(init1, init2, init3, init4) 
+
+#stan function does all of the work of fitting a Stan model and returning the results as an instance 
+#of stanfit = post in our exercises.
+post=stan(model_code=mark_recapture_model,data=dataset,init=inits,warmup=500,iter=2000,chains=4,thin=1)
+```
+
+We have now samples from multiple chains. Next, we check for convergence of $N$ visually and with PSRF which is Rhat in Stan output 
+
+based on summary statistics for different chains what is the burn-in according to visual inspection
+
+
+Next we can examine the posterior samples in various ways.
+
+```{r}
+# visual inspection 
+plot(post, plotfun= "trace", pars ="N", inc_warmup = TRUE)
+
+# Inspection with PSRF=Rhat
+print(post,pars="N")
+# Compared summary statistics for different chains
+summary(post,pars="N")
+# or
+post_summary <- summary(post,pars="N")
+post_summary$summary 
+post_summary$c_summary 
+
+# Remove burn-in (if needed)
+# Nsamp=as.matrix(post, pars ="N") doesn't contain burn-in samples
+
+#Calculate the autocorrelation of the samples after removing burn-in.  Is autocorrelation
+#a problem here?
+stan_ac(post,"N",inc_warmup = FALSE, lags = 25)
+
+#plot histogram of the posterior of N
+plot(post, plotfun = "hist", pars = "N",bins=50)
+
+#calculate the posterior mean, standard deviation and 5% and 95% quantiles using ready-made summary function
+post_summary2 <- summary(post,pars="N",probs = c(0.05, 0.95))
+post_summary2$summary 
+```
+
+
+You can also extract the posterior samples of N to ordinary vector/matrix. This is needed if you have to do some post-processing with the samples. For example, Let's consider we are interested in the proportion of marked vs un-marked, $\phi=M/(N-M)$ balls in this example. The Monte Carlo approximation of the posterior for $\phi$ is as follows:
+
+```{r}
+# extract the posterior samples of N
+Nsamp=as.matrix(post, pars ="N")
+
+# generate samples from posterior for phi
+phi = M/(Nsamp-M)
+
+# Visualize the sample chain and posterior summaries of phi
+plot(phi, type="l", main="trace of N", xlab="sample number", ylab="N")
+Rhat(phi)
+
+mean(phi)
+sd(phi)
+quantile(phi, c(0.05, 0.95))
+hist(phi)
+
+```
+
