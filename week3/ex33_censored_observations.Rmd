@@ -18,21 +18,22 @@ You are not told how many heads were seen, only that the number is
 less than 3. 
 
 \begin{itemize}
-\item[1)] Implement the model with Stan and sample from the posterior of $\theta$.
-\begin{itemize}
-\item[a)] Check for convergence visually and by calculating the PSRF statistics.
-\item[a)] Calculate the autocorrelation of the samples.
-\end{itemize}
-\item[2)] Using the samples of $\theta$ 
-\begin{itemize}
-\item[a)] draw the posterior density function of $\theta$ and 
-\item[b)] calculate the posterior probability that $\theta<0.3$ and the 5\% and the 95\% quantiles.
-\item[c)] calculate the posterior mean and variance of $\theta$.
-\end{itemize}
-\item[3)] Draw samples from the posterior predictive distribution for new $\tilde{y}$ in a new sample of size $n=10$ and 
-\begin{itemize}
-\item[a)] draw histogram of samples from the posterior predictive distribution for $\tilde{y}$
-\item[a)] Calculate the posterior predictive mean and variance of $\tilde{y}$
+  \item[1)] Implement the model with Stan and sample from the posterior of $\theta$.
+    \begin{itemize}
+      \item[a)] Check for convergence visually and by calculating the PSRF statistics.
+      \item[a)] Calculate the autocorrelation of the samples.
+    \end{itemize}
+  \item[2)] Using the samples of $\theta$ 
+    \begin{itemize}
+      \item[a)] draw the posterior density function of $\theta$ and 
+      \item[b)] calculate the posterior probability that $\theta<0.3$ and the 5\% and the 95\% quantiles.
+      \item[c)] calculate the posterior mean and variance of $\theta$.
+    \end{itemize}
+  \item[3)] Draw samples from the posterior predictive distribution for new $\tilde{y}$ in a new sample of size $n=10$ and 
+    \begin{itemize}
+      \item[a)] draw histogram of samples from the posterior predictive distribution for $\tilde{y}$
+      \item[a)] Calculate the posterior predictive mean and variance of $\tilde{y}$
+    \end{itemize}
 \end{itemize}
 
 ## Model answer and grading
@@ -52,22 +53,22 @@ library(coda)
 options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)
 ```
-
+# Ex 1
 ```{r}
 censored_observations_model="
 //  Fill in here the model. See mark-recapture example and Stan manual for help
 data {
   int<lower = 0> N;
-  int<lower = 0> y1;
-  int<lower = 0> y2;
-  int<lower = 0> y3;
+  int<lower = 0> y;
 }
 parameters {
-  real<lower = 0> prior;
+  real<lower = 0> theta;
 }
 model {
-  prior ~ beta(1, 1);
-  target += (binomial_lpmf(y1|N, 0.5) + binomial_lpmf(y2|N, 0.5) + binomial_lpmf(y3|N, 0.5)) * prior;
+  theta ~ beta(1, 1);
+  for (i in 0:y-1) {
+    target += binomial_lpmf(i|N, theta);
+  }
 }
 "
 ```
@@ -76,10 +77,8 @@ Next, define the data list and run Markov chain with Stan
 
 ```{r}
 N <- 10
-y1 <- 0
-y2 <- 1
-y3 <- 2
-dataset <- list ('N'=N, 'y1'=y1, 'y2'=y2, 'y3'=y3) 
+y <- 3
+dataset <- list ('N'=N, 'y'=y) 
 
 #give initial values for all chains for parameter N
 init1 <- list(N=10)
@@ -97,30 +96,42 @@ Next we can examine the posterior samples in various ways. See mark-recapture ex
 
 ```{r}
 # visual inspection 
-plot(post, plotfun='trace', pars='prior', inc_warmup=T)
+plot(post, plotfun='trace', pars='theta', inc_warmup=T)
 
 # Inspection with PSRF=Rhat
-print(post,pars='prior')
+print(post, pars='theta')
 
 # Compared summary statistics for different chains
-
+summary(post, pars='theta')
 
 #Calculate the autocorrelation of the samples after removing burn-in.  Is autocorrelation a problem here?
-
+# - Autocorrelation does not seem to be a problem as the values are really close to zero or even negative
+stan_ac(post, 'theta', inc_warmup=F, lags=25)
 
 #plot histogram of the posterior of theta (approximation for density function)
-
+plot(post, plotfun='hist', pars='theta', bins=50)
 
 # calculate the probability that theta<0.3 and 5% and 95% quantiles
+post_summary <- summary(post, pars='theta', probs=c(0.3, 0.05, 0.95))
+post_summary$summary
+sprintf('Posterior probability that theta < 0.3: %f', post_summary$summary[4])
+sprintf('Posterior probability 5pct quatile: %f', post_summary$summary[5])
+sprintf('Posterior probability 95pct quatile: %f', post_summary$summary[6])
 
 #calculate the posterior mean and variance
-
+sprintf('Posterior mean: %f', post_summary$summary[1])
+sprintf('Posterior variance: %f', post_summary$summary[3]^2)
 ```
 
 Next we draw samples from the posterior predictive distribution for new $y$ in a new sample of size $n=10$.
 
 ```{r}
-
+n <- 10
+samples <- extract(post, pars='theta')
+data <- samples$theta[1:10]
+hist(data)
+sprintf('Posterior sample mean: %f', mean(data))
+sprintf('Posterior sample variance: %f', var(data))
 ```
 
 

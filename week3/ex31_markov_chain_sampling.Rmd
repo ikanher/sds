@@ -5,13 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
-
-# Ex1
-```{r}
-options(mc.cores = parallel::detectCores())
 library(rstan)
-library(StanHeaders)
 ```
 
 ## Ex1.1
@@ -23,14 +17,15 @@ TBD
 Var  | Phi       | Sd     | Corr
 -----+-----------+--------+------
 1    | 0         | 1      | 0
-1    | 0.5       | 12     | 0.5^t
-1    | sqrt(4/5) | 0.2    | sqrt(4/5)^t
-1    | 0.1       | 99/100 | 0.1^t
+1    | 0.5       | 12     | 0.5
+1    | sqrt(4/5) | 0.2    | sqrt(4/5)
+1    | 0.1       | 99/100 | 0.1
 
 </pre>
 
 ## Ex1.3
 ```{r}
+
 C <- 10
 theta_i <- C
 
