@@ -1,0 +1,129 @@
+---
+title: "Mark-recapture method for population size estimation"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+The basic idea in mark-recapture method for estimating animal populations is that a researcher visits a study area and captures a group of individuals. Each of these individuals is marked with a unique identifier (e.g., a numbered tag, ring or band), and is released back into the  environment. Sufficient time is allowed to pass for the marked individuals to redistribute themselves among the unmarked population. After a while, the researcher returns and  captures another sample of individuals. 
+
+Assumptions in the basic implementation of the method are, among others, that the time between consecutive captures is long enough for "perfect mixing", marks are not lost, the behavior and capture probability of an individual does not change due to marking and that the study population is "closed". In other words, the two visits to the study area  are close enough in time so that no individuals die, are born, move into the study area (immigrate) or move out of the study area (emigrate) between visits. If these assumptions hold, we can reasonably assume that the *marked animals are randomly distributed in the total population" which then allows for inference on the total population size.
+
+This method is illustrated during the lecture where we estimate the number of balls in a bag (the total *population* comprises of all the balls in the bag).
+
+Let $N$ denote the total population size, $M$ the population size marked individuals at first visit, $C$ the total number of animals captured at the second time and $R$ the number of recaptured animals. By assuming that $N$ is large compared to $M$ and that the marked individuals are randomly distributed in the population, we can use Binomial distribution as our observation model for $R$ as follows
+\begin{equation}
+     p(R|C,M,N) = \mathrm{Bin}(R| C, M/N) 
+\end{equation}
+We have to define a prior for $N$ after which we can solve its posterior 
+\begin{equation}
+     p(N|M,C,R) \propto \mathrm{Bin}(R| C, M/N) p(N)
+\end{equation}
+
+The number of marked balls is 
+```{r}
+M=25
+```
+
+We will now analyze the total number of balls in the bag. This will be done in first by exact calculations with discrete valued $N$ and after that using Markov chain Monte Carlo.
+
+## Conduct the inference with discretization
+
+Since there is only one, discrete, variable that we are interested in, we can easily discretize the problem and work with array(s) of probabilities
+
+Let's define an array of values $N$ that we think are a priori plausible at all. The below values are "hard" limits. Prior probability below the minimum and above the maximum is zero
+```{r}
+abs_min <- M    # there were M=25 marked balls
+abs_max <- 1000  # No way that bag can contain more than 1000 balls (a subjective assumption)
+
+
+# Define the evaluation points so that all integers between 
+# abs_min and abs_max are included
+Nseq <- seq(abs_min, abs_max, length=abs_max-abs_min+1)  
+```
+
+Next we define prior for $N$ and draw it.
+
+Now that we have a discrete variable we have to give a prior probability for each of the elements in Nseq. You  can do this in multiple ways. Here are few examples:
+```{r}
+par(mfrow=c(2,3))              # Open figure for plotting the examples
+
+# uniform prior
+Nprior <- rep(1,length(Nseq))/length(Nseq)  
+sum(Nprior)              # check that prior probabilities sum up to to one
+plot(Nseq,Nprior, main="Uniform prior", xlab="N", type="l")
+# "Gaussian" prior
+Nprior <- dnorm(Nseq, mean=50, sd=20)
+Nprior <- Nprior/sum(Nprior)     # Normalize the prior probabilities to sum to one
+sum(Nprior)        # check that prior probabilities sum up to to one
+plot(Nseq,Nprior, main="Gaussian prior", xlab="N", type="l")
+# log-Gaussian prior
+Nprior <- dlnorm(Nseq, mean=5, sd=1)
+Nprior <- Nprior/sum(Nprior)   # Normalize the prior probabilities to sum to one
+sum(Nprior)        # check that prior probabilities sum up to to one
+plot(Nseq,Nprior, main="log-Gaussian prior", xlab="N", type="l")
+# Step wise prior by giving different relative weights for different values
+Nprior <- rep(1,length(Nseq))  
+Nprior[Nseq>50 & Nseq<600] <- 2  
+Nprior[Nseq>70 & Nseq<400] <- 4  
+Nprior[Nseq>200 & Nseq<300] <- 6  
+Nprior <- Nprior/sum(Nprior)    # Normalize the prior probabilities to sum to one
+sum(Nprior)        # check that prior probabilities sum up to to one
+plot(Nseq,Nprior, main="Step-wise prior", xlab="N", type="l")
+
+# --- Here we will fill in the prior defined during the lecture ---
+Nprior <- dlnorm(Nseq, mean=6, sd=1)
+Nprior <- Nprior/sum(Nprior)    # Normalize to sum to one
+sum(Nprior)                     # check that prior probabilities sum up to to one
+
+plot(Nseq,Nprior, main="My own prior", xlab="N", type="l")
+```
+
+Now that we have defined the vector of prior probabilities for different values of $N$ we can can conduct the second sampling round, to obtain data $C$ and $R$, and after that calculate the posterior distribution for it by using the Bayes Theorem explicitly
+
+```{r}
+# The result from the other sampling time
+C=15 
+R=5
+
+Nposterior <- Nprior*dbinom(R,C,M/Nseq)  # numerator of Bayes theorem
+Nposterior <- Nposterior/sum(Nposterior) # divide by marginal likelihood
+plot(Nseq,Nposterior, main="The posterior distribution", xlab="N", type="l")
+```
+
+Given the vector of posterior probabilities for different values of $N$ we can calculate various summaries for the posterior distribution. Such as 
+
+the posterior mean
+```{r}
+posteriorMean = sum(Nposterior*Nseq)
+```
+
+the posterior standard deviation
+```{r}
+posteriorSD = sqrt(sum(Nposterior* (Nseq-posteriorMean)^2))
+```
+
+and some quantiles. However, for these we need to first calculate the cumulative distribution function
+```{r}
+NposteriorCDF <- cumsum(Nposterior)           
+# Plot CDF
+plot(Nseq,NposteriorCDF, main="posterior CDF", xlab="N", type="l")
+```
+
+Now we can calculate, for example, the 10% and 90% posterior quantile
+```{r}
+# 10% quantile is the last N at which CDF is under 10%
+Nseq[max(which(NposteriorCDF<0.1))]
+# 90% quantile is the first N at which CDF is over 90%
+Nseq[min(which(NposteriorCDF>0.9))]
+```
+
+as well as the probability that $N$ is less than 50 ($p(N<50|M,C,R)$) 
+```{r}
+NposteriorCDF[which(Nseq==49)]
+```
+
