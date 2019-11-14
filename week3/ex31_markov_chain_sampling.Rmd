@@ -1,0 +1,63 @@
+---
+title: "Assignment 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Ex1
+```{r}
+options(mc.cores = parallel::detectCores())
+library(rstan)
+library(StanHeaders)
+```
+
+## Ex1.1
+
+TBD
+
+## Ex1.2
+<pre>
+Var  | Phi       | Sd     | Corr
+-----+-----------+--------+------
+1    | 0         | 1      | 0
+1    | 0.5       | 12     | 0.5^t
+1    | sqrt(4/5) | 0.2    | sqrt(4/5)^t
+1    | 0.1       | 99/100 | 0.1^t
+
+</pre>
+
+## Ex1.3
+```{r}
+C <- 10
+theta_i <- C
+
+for (phi in c(0, 1/2, sqrt(4/5), 1/10)) {
+  for (sd in c(1, 12, 1/5, 99/100)) {
+    thetas <- c()
+    for (i in 1:100) {
+      theta_i <- rnorm(1, phi * theta_i, sd)
+      thetas <- c(theta_i, thetas)
+    }
+    plot(1:100, thetas, main=sprintf('Phi: %f, Sd: %f', phi, sd), col='red')
+  }
+}
+```
+
+## Ex1.4
+```{r}
+n <- 1200
+phi <- sqrt(4/5)
+
+for (C in c(10, -10, 5)) {
+  theta_i <- C
+  thetas <- c()
+  for (i in 1:n) {
+    theta_i <- rnorm(1, phi * theta_i, sd)
+    thetas <- c(theta_i, thetas)
+  }
+  plot(1:n, thetas, main=sprintf('C: %d, Rhat: %f', C, Rhat(thetas)))
+}
+```

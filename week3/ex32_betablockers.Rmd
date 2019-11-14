@@ -1,0 +1,69 @@
+---
+title: 'Results: Beta-blockers exercise'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+options(mc.cores = parallel::detectCores())
+library(rstan)
+library(StanHeaders)
+```
+
+## Results: Beta-blockers exercise
+
+Inference for a $2\times 2$ table: an experiment was performed to estimate 
+the effect of beta-blockers on mortality of cardiac patients. A group of patients 
+were randomly assigned to treatment and control groups: out of 674 patients 
+receiving the control, 39 died, and out of 680 receiving the treatment, 22 died. 
+Assume that the outcomes are independent and binomially distributed with 
+probabilities of death $p_0$ and $p_1$ under the control and treatment, 
+respectively. 
+
+ * Set up a noninformative prior distribution for $(p_0,p_1)$ and draw samples from their posterior
+ * Summarize the posterior distribution for the odds ratio $(p_1/(1-p_1))/(p_0(1-p_0))$ using the posterior mean, median and central 95\% credible interval.
+ * Analyze and discuss the sensitivity of inference to the choice of the prior density.
+
+```{r}
+x <- seq(0, 1, length.out=100)
+
+# p0 - Control group
+n <- 674
+y <- 39
+
+alpha0 <- 1
+alpha0 <- alpha0 + y
+
+beta0 <- 1
+beta0 <- beta0 + n - y
+
+p0 <- dbeta(x, alpha0, beta0)
+p0 <- p0/sum(p0)
+
+# p1 - Treatment group
+n <- 680
+y <- 22
+
+alpha1 <- 1
+alpha1 <- alpha1 + y
+
+beta1 <- 1
+beta1 <- beta1 + n - y
+
+p1 <- dbeta(x, alpha1, beta1)
+p1 <- p1/sum(p1)
+
+ratio <- (p1/(1-p1))/(p0/(1-p0))
+
+plot(x, p0, type='l', col='red')
+lines(x, p1, col='blue')
+
+ratio
+
+sprintf('Posterior odds ratio mean: %f', mean(ratio))
+#sprintf('Posterior odds ratio median and 95 pct credible interval for p0: %f, %f', qbeta(c(0.5,0.95), alpha0, beta0))
+#sprintf('Posterior odds ratio median and 95 pct credible interval for p1: %f, %f', qbeta(c(0.5,0.95), alpha1, beta1))
+```
