@@ -19,12 +19,19 @@ rstan_options(auto_write = TRUE)
 
 
 write the model description into text file "model_ratTumor.stan", load the data and conduct the sampling. (You can write the model also inline but the model-file option is to illustrate the alternative way.) Note! You can skip defining the initial parameter values (there would be more than 70 of them) and test how well Stan can define them automatically.
+
 ```{r}
 # Load the data and put it into a list format
 dat = read.table ("rats.dat", header=TRUE)
 n = nrow(dat)
 N = dat$N
 y = dat$y
+
+# init1 <- list(y=1, N=50)
+# init2 <- list(y=12, N=28)
+# init3 <- list(y=23, N=48)
+# init4 <- list(y=50, N=102)
+# inits <- list(init1, init2, init3, init4)
 
 data <- list ("n"=n,"N"=N, "y"=y)   # set data into named list
 
