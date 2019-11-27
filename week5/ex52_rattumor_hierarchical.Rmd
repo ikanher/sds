@@ -1,0 +1,69 @@
+---
+title: "Exercise Hierarchical model"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Load the needed libraries into R 
+```{r}
+library(ggplot2)
+library(StanHeaders)
+library(rstan)
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+```
+
+
+write the model description into text file "model_ratTumor.stan", load the data and conduct the sampling. (You can write the model also inline but the model-file option is to illustrate the alternative way.) Note! You can skip defining the initial parameter values (there would be more than 70 of them) and test how well Stan can define them automatically.
+```{r}
+# Load the data and put it into a list format
+dat = read.table ("rats.dat", header=TRUE)
+n = nrow(dat)
+N = dat$N
+y = dat$y
+
+data <- list ("n"=n,"N"=N, "y"=y)   # set data into named list
+
+post=stan(file="model_ratTumor.stan",data=data,warmup=500,iter=2000,chains=4,thin=1,control=list(adapt_delta=0.99))
+```
+
+Examine convergence, autocorrelation etc.
+```{r}
+
+```
+
+*visualize posterior of $\mu$, $s$ and $\theta_i,i=1,\dots,71$*
+
+```{r}
+
+```
+
+*what is the interpretation of posterior of $\mu$? For example, what does its posterior distribution tell you?*  
+
+*what is the interpretation of posterior of $\theta_i$? How does this differ from the interpretation of $\mu$.*
+
+*calculate the posterior predictive distribution of outcome $\tilde{y}_{71}$ of a new experiment with $\tilde{N}_{71}=20$ new test animals in laboratory 71.* 
+
+```{r}
+
+```
+
+*calculate the posterior predictive distribution of $\theta_{72}$ and $\tilde{y}_{72}$ with $\tilde{N}_{72}=20$ new test animals in a new laboratory of number 72 (a laboratory from where we don't have data yet) that is similar to the existing 71 laboratories* 
+
+
+```{r}
+
+```
+
+
+*sample from the posterior distribution of the so called pooled estimate of $\theta$. *
+```{r}
+
+
+```
+
+
