@@ -1,0 +1,112 @@
+---
+title: "Bio-assay experiment"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load the needed libraries into R 
+```{r}
+library(ggplot2)
+library(StanHeaders)
+library(rstan)
+
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+```
+
+**1. Define the model and sample from posterior **
+
+Note. There are 2 ways to do the model. One uses ready made functions inv_logit and binomial_logit (see Stan manual). The other 2 uses just definitions. This way is somewhat unstable and you need to adjust control parameters to get the model run so the first way is better
+```{r}
+model_bioassay = "
+"
+```
+
+Load the data and put it into a list format
+```{r}
+bioassay <- read.table ("ex_bio-assay.dat", header=TRUE)
+bioassay
+N <- nrow(bioassay)
+x <- bioassay$Dose
+n <- bioassay$Nanim
+y <- bioassay$Ndeath
+
+data <- list ("N"=N, "x"=x, "n"=n, "y"=y)
+
+## Define parameters and set initial values for them
+## We are going to sample four chains so we need four starting points
+## It is good practice to set them far apart from each others
+
+
+## Run the Markov chain sampling with Stan:
+post=stan(model_code=model_bioassay,data=data,warmup=500,iter=2000,init=inits,chains=4,thin=5)#,control=list(adapt_delta=0.9))
+
+## check the convergence visually and by using PSRF by Gelman and Rubin (Rhat in Stan)
+
+## visualize posterior (together and one at a time)
+
+## Now parameter a contains a sample from the posterior p(a|y,x,n)
+## and parameter b contains sample from the posterior p(b|y,x,n)
+## We can now plot them in 2D and plot histograms of them
+
+```
+
+**2. visualize the posterior of theta as a function of dose level x**
+```{r}
+# See help from the linear regression example
+# mean and appropriate posterior interval
+# NOTE! 
+# the posterior of theta at specific x is not Gaussian as 
+# that of f in the linear regression example. Thus, use 
+# quantile instead of std when calculating the 95% interval.
+xp = seq(-0.8, 0.8, length=101)  # the evaluation points
+mth = 0                       # initialize mean
+q_lower = 0                      # initialize confidence interval
+q_upper = 0                      # initialize 
+
+for (i in 1:length(xp)) {
+
+  }                        # new figure frame
+
+```
+
+**3. Calculate the covariance between a and b**
+
+```{r}
+
+```
+
+
+**4. sample from the posterior distribution of LD50 and visualize it **
+
+
+```{r}
+## Now we will approximate the posterior of LD50 
+## Sample from p(LD50 | x, y, n) and visualize that
+##write the LD50 dose level as function of a and b
+## see book page 77
+
+
+```
+
+
+**5. visualize the posterior distribution of theta with dose level (log g/ml) 0**
+
+
+```{r}
+
+```
+
+**6. Posterior predictive distribution for new observation**
+
+ Assume that we want to make new experiments to get better estimate for the LD50 statistics. What is the probability distribution for outcome of new experiments $p( \tilde{y} | \tilde{x},\tilde{n}, x, y, n)$?
+
+
+```{r}
+
+
+```
+
